@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { getLogger } from '../../core';
 import { BugProps } from './BugProps';
+import { Plugins } from "@capacitor/core";
+
+const { Storage } = Plugins; //local
 
 const log = getLogger('bugApi');
 
@@ -31,7 +34,21 @@ const config = {
 };
 
 export const getBugs: () => Promise<BugProps[]> = () => {
-  return withLogs(axios.get(itemUrl, config), 'getBugs');
+  var result = axios.get(itemUrl, config);
+  result.then(function (result) {
+    result.data.forEach(async (bug: BugProps) => {
+      await Storage.set({
+        key: bug.id!,
+        value: JSON.stringify({
+          id: bug.id,
+          title: bug.title,
+          description: bug.description,
+          priority: bug.priority,
+        }),
+      });
+    });
+  });
+  return withLogs(result, "getBugs");
 }
 
 export const createBug: (item: BugProps) => Promise<BugProps[]> = item => {
@@ -39,7 +56,20 @@ export const createBug: (item: BugProps) => Promise<BugProps[]> = item => {
 }
 
 export const updateBug: (item: BugProps) => Promise<BugProps[]> = item => {
-  return withLogs(axios.put(`${itemUrl}/${item.id}`, item, config), 'updateBug');
+  var result = axios.put(`${itemUrl}/${item.id}`, item, config);
+  result.then(async function (result) {
+    var bug = result.data;
+    await Storage.set({
+      key: bug.id!,
+      value: JSON.stringify({
+        id: bug.id,
+        title: bug.title,
+        description: bug.description,
+        priority: bug.priority,
+      })
+    });
+  });
+  return withLogs(result, "updateBugs");
 }
 
 interface MessageData {

@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { RouteComponentProps } from 'react-router';
 import {
   IonContent,
@@ -6,6 +6,8 @@ import {
   IonFabButton,
   IonHeader,
   IonIcon,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
   IonList, IonLoading,
   IonPage,
   IonTitle,
@@ -17,10 +19,21 @@ import { getLogger } from '../../core';
 import {BugContext} from './BugProvider';
 
 const log = getLogger('BugList');
+// const [disableInfiniteScroll, setDisableInfiniteScroll] = useState<boolean>(false);
 
 const BugList: React.FC<RouteComponentProps> = ({ history }) => {
   const { bugs, fetching, fetchingError } = useContext(BugContext);
   log('render');
+  async function searchNext($event: CustomEvent<void>) {
+    // if (bugs && pos < bugs.length) {
+    //   setItems([...items, ...tasks.slice(pos, 10 + pos)]);
+    //   setPos(pos + 10);
+    // } else {
+    //   setDisableInfiniteScroll(true);
+    // }
+    // ($event.target as HTMLIonInfiniteScrollElement).complete();
+  }
+
   return (
     <IonPage>
       <IonHeader>
@@ -37,6 +50,14 @@ const BugList: React.FC<RouteComponentProps> = ({ history }) => {
                onEdit={id => history.push(`/bug/${id}`)} />)}
           </IonList>
         )}
+        <IonInfiniteScroll threshold="100px"
+          onIonInfinite={(e: CustomEvent<void>) => searchNext(e)}>
+          {console.log("Inceput loading....")}
+          <IonInfiniteScrollContent
+            loadingText="Loading more tasks...">
+          </IonInfiniteScrollContent>
+          {console.log("Final loading....")}
+        </IonInfiniteScroll>
         {fetchingError && (
           <div>{fetchingError.message || 'Failed to fetch items'}</div>
         )}

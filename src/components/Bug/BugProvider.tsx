@@ -3,8 +3,11 @@ import PropTypes from 'prop-types';
 import { getLogger } from '../../core';
 import { BugProps } from './BugProps';
 import { createBug, getBugs, newWebSocket, updateBug } from './bugApi';
+import { Plugins } from "@capacitor/core"
+
 
 const log = getLogger('BugProvider');
+const { Storage } = Plugins;
 
 type SaveBugFn = (item: BugProps) => Promise<any>;
 
@@ -100,7 +103,29 @@ export const BugProvider: React.FC<BugProviderProps> = ({ children }) => {
         }
       } catch (error) {
         log('fetchItems failed');
-        dispatch({ type: FETCH_ITEMS_FAILED, payload: { error } });
+        let realKeys: string[] = [];
+        await Storage.keys().then((keys) => {
+          return keys.keys.forEach(function (value) {
+            if (value !== "user")
+              realKeys.push(value);
+          })
+        });
+
+        let values: string[] = [];
+        for (const key1 of realKeys) {
+          await Storage.get({ key: key1 }).then((value) => {
+            // @ts-ignore
+            values.push(value.value);
+          })
+        }
+        const bugs: BugProps[] = [];
+        for (const value of values) {
+          var bug = JSON.parse(value);
+          bugs.push(bug);
+        }
+        if (!canceled) {
+          dispatch({ type: FETCH_ITEMS_SUCCEEDED, payload: { bugs } });
+        }
       }
     }
   }
@@ -113,8 +138,41 @@ export const BugProvider: React.FC<BugProviderProps> = ({ children }) => {
       log('saveItem succeeded');
       dispatch({ type: SAVE_ITEM_SUCCEEDED, payload: { item: savedItem } });
     } catch (error) {
-      log('saveItem failed');
-      dispatch({ type: SAVE_ITEM_FAILED, payload: { error } });
+      let realKeys: string[] = [];
+      await Storage.keys().then((keys) => {
+        return keys.keys.forEach(function (value) {
+          if (value !== "user")
+            realKeys.push(value);
+        })
+      });
+
+      let values: string[] = [];
+      for (const key1 of realKeys) {
+        await Storage.get({ key: key1 }).then((value) => {
+          // @ts-ignore
+          values.push(value.value);
+        })
+      }
+      const bugs: BugProps[] = [];
+      for (const value of values) {
+        var bug = JSON.parse(value);
+        bugs.push(bug);
+      }
+      let k=0;
+      if (bugs.filter(bug => bug.id === item.id).length > 0) {
+        k = bugs.findIndex(bug => bug.id === item.id);
+        bugs[k]=item;
+      }
+      await Storage.set({
+        key: item.id!,
+        value: JSON.stringify({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          priority: item.priority,
+        })
+      });
+      dispatch({ type: FETCH_ITEMS_SUCCEEDED, payload: { bugs } });
     }
   }
 
