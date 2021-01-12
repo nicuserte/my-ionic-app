@@ -21,28 +21,27 @@ import '@ionic/react/css/display.css';
 
 /* Theme variables */
 import './theme/variables.css';
-import BugList from './components/Bug/BugList';
 import { BugProvider } from './components/Bug/BugProvider';
-import BugEdit from './components/Bug/BugEdit';
-import { Login } from './components/Login/Login';
-import { AuthProvider } from './components/Login/AuthProvider';
+import {AuthProvider, Login, PrivateRoute} from "./auth";
+import BugList from "./components/Bug/BugList";
+import BugEdit from "./components/Bug/BugEdit";
 
 const App: React.FC = () => (
-  <IonApp>
-    <BugProvider>
-      <IonReactRouter>
-        <IonRouterOutlet>
-          <AuthProvider>
-            <Route path="/login" component={Login} exact={true} />
-            <Route path="/bugs" component={BugList} exact={true} />
-            <Route path="/bug" component={BugEdit} exact={true} />
-            <Route path="/bug/:id" component={BugEdit} exact={true} />
-            <Route exact path="/" render={() => <Redirect to="/bugs" />} />
-          </AuthProvider>
-        </IonRouterOutlet>
-      </IonReactRouter>
-    </BugProvider>
-  </IonApp>
+    <IonApp>
+        <IonReactRouter>
+            <IonRouterOutlet>
+                <AuthProvider>
+                    <Route path="/login" component={Login} exact={true}/>
+                    <BugProvider>
+                        <PrivateRoute path="/bugs" component={BugList} exact={true}/>
+                        <PrivateRoute path="/bug" component={BugEdit} exact={true}/>
+                        <PrivateRoute path="/bug/:id" component={BugEdit} exact={true}/>
+                    </BugProvider>
+                    <Route exact path="/" render={() => <Redirect to="/bugs"/>}/>
+                </AuthProvider>
+            </IonRouterOutlet>
+        </IonReactRouter>
+    </IonApp>
 );
 
 export default App;
